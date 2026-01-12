@@ -14,7 +14,7 @@ run_command "pacman -Syyu --noconfirm" "Update package database and upgrade pack
 if command -v yay > /dev/null; then
   print_warning "Skipping yay installation (already installed)."
 elif run_command "pacman -S --noconfirm --needed git base-devel" "Install YAY (Must)/Breaks the script" "yes"; then
-	run_command "bash -c 'cd /tmp && git clone https://aur.archlinux.org/yay-git.git && cd yay && makepkg --noconfirm -si'" "Clone and build YAY (Must)/Breaks the script" "no" "no" 
+	run_command "bash -c 'cd /tmp && git clone https://aur.archlinux.org/yay-git.git && cd yay-git && makepkg --noconfirm -si'" "Clone and build YAY (Must)/Breaks the script" "no" "no" 
 fi
 run_command "pacman -S --noconfirm pipewire wireplumber pamixer brightnessctl" "Configuring audio and brightness (Recommended)" "yes"
 
