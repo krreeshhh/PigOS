@@ -18,7 +18,8 @@
     "network",
     "bluetooth",
     "battery",
-    "tray"
+    "tray",
+    "custom/power"
   ],
   "hyprland/workspaces": {
     "on-click": "activate",
@@ -104,7 +105,7 @@
     ],
     "format": "{icon}",
     "format-wifi": "{icon}",
-    "format-ethernet": "󰀂",
+    "format-ethernet": "2",
     "format-disconnected": "󰤮",
     "tooltip-format-wifi": "{essid} ({frequency} GHz)\n⇣{bandwidthDownBytes}  ⇡{bandwidthUpBytes}",
     "tooltip-format-ethernet": "⇣{bandwidthDownBytes}  ⇡{bandwidthUpBytes}",
@@ -180,5 +181,10 @@
   "tray": {
     "icon-size": 14,
     "spacing": 10
+  },
+  "custom/power": {
+    "format": "⏻ ",
+    "on-click": "wlogout --buttons-per-row 2",
+    "tooltip": false
   }
 }
