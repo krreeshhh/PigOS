@@ -47,8 +47,7 @@ window#waybar {
 #workspaces,
 #tray,
 #bluetooth,
-#backlight,
-#custom-power {
+#backlight {
     background: #1e1e2e;
     padding: 2px 10px;
     margin-top: 3px;
@@ -109,12 +108,7 @@ window#waybar {
 }
 
 #tray {
-    border-radius: 10px 0 0 10px;
-    margin-left: 10px;
-}
-
-#custom-power {
-    color: #f38ba8;
-    border-radius: 0 10px 10px 0;
+    border-radius: 10px;
     margin-right: 10px;
+    padding: 2px 10px;
 }
