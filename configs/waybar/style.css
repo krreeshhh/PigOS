@@ -8,8 +8,14 @@
 }
 
 window#waybar {
-    background: rgba(21, 18, 27, 0);
+    background: rgba(21, 18, 27, 0.75);
     color: #cdd6f4;
+}
+
+tooltip {
+    background: rgba(30, 30, 46, 0.9);
+    border-radius: 10px;
+    border: 1px solid rgba(137, 180, 250, 0.3);
 }
 
 #workspaces button {
@@ -19,12 +25,13 @@ window#waybar {
 }
 
 #workspaces button:hover {
-    background: inherit;
-    color: inherit;
+    background: rgba(137, 180, 250, 0.2);
+    color: #cdd6f4;
     border-color: inherit;
     box-shadow: none;
     text-decoration: none;
     opacity: 1;
+    border-radius: 8px;
 }
 
 #workspaces button.active {
@@ -49,7 +56,7 @@ window#waybar {
 #bluetooth,
 #backlight,
 #custom-power {
-    background: #1e1e2e;
+    background: rgba(30, 30, 46, 0.8);
     padding: 2px 10px;
     margin-top: 3px;
     margin-bottom: 3px;
@@ -57,7 +64,7 @@ window#waybar {
 }
 
 #workspaces {
-    background: #1e1e2e;
+    background: rgba(30, 30, 46, 0.8);
     border-radius: 10px;
     margin-left: 10px;
     padding-right: 8px;
