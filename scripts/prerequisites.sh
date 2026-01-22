@@ -24,7 +24,7 @@ run_command "systemctl enable bluetooth.service && systemctl start bluetooth.ser
 run_command "pacman -S --noconfirm networkmanager network-manager-applet" "Configuring network services (Recommended)" "yes"
 run_command "systemctl enable --now NetworkManager.service" "Enable and start network services (Recommended)" "yes"
 
-run_command "pacman -S --noconfirm dunst" "Install Dunst notification daemon (Recommended)" "yes"
+run_command "pacman -S --noconfirm dunst libnotify" "Install Dunst notification daemon and libnotify (Recommended)" "yes"
 
 run_command "pacman -S --noconfirm ttf-cascadia-code-nerd ttf-cascadia-mono-nerd ttf-fira-code ttf-fira-mono ttf-fira-sans ttf-firacode-nerd ttf-iosevka-nerd ttf-iosevkaterm-nerd ttf-jetbrains-mono-nerd ttf-jetbrains-mono ttf-nerd-fonts-symbols ttf-nerd-fonts-symbols ttf-nerd-fonts-symbols-mono" "Installing Nerd Fonts and Symbols (Recommended)" "yes" 
 

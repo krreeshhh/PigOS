@@ -14,6 +14,7 @@ run_command "cp -r $BASE_DIR/configs/waybar /home/$SUDO_USER/.config/ && chown -
 
 run_command "yay -S --sudoloop --noconfirm tofi-git" "Install Tofi - Application Launcher" "yes" "no"
 run_command "cp -r $BASE_DIR/configs/tofi /home/$SUDO_USER/.config/ && chown -R $SUDO_USER:$SUDO_USER /home/$SUDO_USER/.config/tofi" "Copy Tofi config(s)" "yes"
+run_command "mkdir -p /home/$SUDO_USER/.config/hypr/scripts && cp -r $BASE_DIR/configs/hypr/scripts/* /home/$SUDO_USER/.config/hypr/scripts/ && chmod +x /home/$SUDO_USER/.config/hypr/scripts/* && chown -R $SUDO_USER:$SUDO_USER /home/$SUDO_USER/.config/hypr/scripts" "Copy and setup Hyprland scripts" "yes"
 
 run_command "pacman -S --noconfirm cliphist" "Install Cliphist - Clipboard Manager" "yes"
 
