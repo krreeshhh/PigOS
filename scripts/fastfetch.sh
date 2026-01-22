@@ -170,43 +170,58 @@ echo ""
 SHELL_NAME=$(basename "$SHELL")
 echo -e "${YELLOW}► Configuring shell ($SHELL_NAME)...${NC}"
 
-# Configure auto-run based on shell
-case "$SHELL_NAME" in
-    bash)
-        RC_FILE="$HOME/.bashrc"
-        ;;
-    zsh)
-        RC_FILE="$HOME/.zshrc"
-        ;;
-    fish)
-        RC_FILE="$HOME/.config/fish/config.fish"
-        mkdir -p "$HOME/.config/fish"
-        ;;
-    *)
-        echo -e "${RED}  ✗ Unsupported shell: $SHELL_NAME${NC}"
-        echo "  Please manually add 'fastfetch' to your shell's RC file"
-        RC_FILE=""
-        ;;
-esac
+# Configure auto-run for all detected shells
+RECOGNIZED_SHELLS=("bash" "zsh" "fish")
+CONFIG_APPLIED=false
 
-if [ -n "$RC_FILE" ]; then
-    # Add PATH for local bin if needed
-    if ! grep -q 'export PATH="$HOME/.local/bin:$PATH"' "$RC_FILE" 2>/dev/null; then
-        echo "" >> "$RC_FILE"
-        echo '# Add local bin to PATH (for PigOS scripts)' >> "$RC_FILE"
-        echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$RC_FILE"
-        echo -e "${GREEN}  ✓ Added ~/.local/bin to PATH in $RC_FILE${NC}"
+for SH in "${RECOGNIZED_SHELLS[@]}"; do
+    case "$SH" in
+        bash) RC_FILE="$HOME/.bashrc" ;;
+        zsh) RC_FILE="$HOME/.zshrc" ;;
+        fish) 
+            RC_FILE="$HOME/.config/fish/config.fish"
+            mkdir -p "$HOME/.config/fish"
+            ;;
+    esac
+
+    if [ -f "$RC_FILE" ] || [ "$SH" == "$SHELL_NAME" ]; then
+        echo -e "${YELLOW}  Configuring $SH ($RC_FILE)...${NC}"
+        
+        # Add PATH for local bin if needed
+        if ! grep -q 'export PATH="$HOME/.local/bin:$PATH"' "$RC_FILE" 2>/dev/null && [ "$SH" != "fish" ]; then
+            echo "" >> "$RC_FILE"
+            echo '# Add local bin to PATH (for PigOS scripts)' >> "$RC_FILE"
+            echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$RC_FILE"
+            echo -e "${GREEN}    ✓ Added PATH to $RC_FILE${NC}"
+        elif [ "$SH" == "fish" ] && ! grep -q 'fish_add_path "$HOME/.local/bin"' "$RC_FILE" 2>/dev/null; then
+            echo "" >> "$RC_FILE"
+            echo '# Add local bin to PATH' >> "$RC_FILE"
+            echo 'fish_add_path "$HOME/.local/bin"' >> "$RC_FILE"
+            echo -e "${GREEN}    ✓ Added PATH to $RC_FILE${NC}"
+        fi
+        
+        # Check if fastfetch is already in the RC file
+        if grep -q "fastfetch" "$RC_FILE" 2>/dev/null; then
+            echo -e "${BLUE}    ℹ Fastfetch already in $RC_FILE${NC}"
+        else
+            echo "" >> "$RC_FILE"
+            echo "# Run fastfetch on terminal startup (PigOS)" >> "$RC_FILE"
+            if [ "$SH" == "fish" ]; then
+                echo "alias fastfetch='fastfetch --config \$HOME/.config/fastfetch/config.jsonc'" >> "$RC_FILE"
+                echo "fastfetch" >> "$RC_FILE"
+            else
+                echo "alias fastfetch='fastfetch --config \$HOME/.config/fastfetch/config.jsonc'" >> "$RC_FILE"
+                echo "fastfetch" >> "$RC_FILE"
+            fi
+            echo -e "${GREEN}    ✓ Fastfetch added to $RC_FILE${NC}"
+        fi
+        CONFIG_APPLIED=true
     fi
-    
-    # Check if fastfetch is already in the RC file
-    if grep -q "^fastfetch" "$RC_FILE" 2>/dev/null; then
-        echo -e "${BLUE}  ℹ Fastfetch is already configured to run on terminal startup${NC}"
-    else
-        echo "" >> "$RC_FILE"
-        echo "# Run fastfetch on terminal startup (PigOS)" >> "$RC_FILE"
-        echo "fastfetch" >> "$RC_FILE"
-        echo -e "${GREEN}  ✓ Fastfetch added to $RC_FILE${NC}"
-    fi
+done
+
+if [ "$CONFIG_APPLIED" = false ]; then
+    echo -e "${RED}  ✗ No common shell RC files found. Adding to $HOME/.bashrc by default.${NC}"
+    echo "fastfetch --config $HOME/.config/fastfetch/config.jsonc" >> "$HOME/.bashrc"
 fi
 
 echo ""
