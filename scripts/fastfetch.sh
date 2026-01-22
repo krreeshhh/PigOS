@@ -12,6 +12,15 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+# Get user info
+if [ -n "$SUDO_USER" ]; then
+    TARGET_USER="$SUDO_USER"
+    TARGET_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
+else
+    TARGET_USER="$(whoami)"
+    TARGET_HOME="$HOME"
+fi
+
 # Get script directory (where PigOS configs are located)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIGS_DIR="$(dirname "$SCRIPT_DIR")/configs/fastfetch"
@@ -60,7 +69,7 @@ fi
 echo ""
 
 # Setup fastfetch config directory
-FASTFETCH_CONFIG_DIR="$HOME/.config/fastfetch"
+FASTFETCH_CONFIG_DIR="$TARGET_HOME/.config/fastfetch"
 echo -e "${YELLOW}► Setting up fastfetch configuration...${NC}"
 
 # Create config directory if it doesn't exist
@@ -96,7 +105,7 @@ echo ""
 
 # Create fastfetch.sh helper script in local bin
 echo -e "${YELLOW}► Creating fastfetch helper script...${NC}"
-LOCAL_BIN="$HOME/.local/bin"
+LOCAL_BIN="$TARGET_HOME/.local/bin"
 mkdir -p "$LOCAL_BIN"
 
 # Create the logo helper script that the config references
@@ -105,46 +114,44 @@ cat > "$LOCAL_BIN/fastfetch.sh" << 'HELPEREOF'
 
 # Fastfetch helper script for PigOS
 # Usage: fastfetch.sh logo - Returns path to current logo
+# Usage: fastfetch.sh set-logo <name> - Sets current logo and updates symlink
 
 FASTFETCH_LOGO_DIR="$HOME/.config/fastfetch/logo"
+CURRENT_LOGO_LINK="$HOME/.config/fastfetch/current_logo.icon"
 DEFAULT_LOGO="$FASTFETCH_LOGO_DIR/pochita.icon"
 
 case "$1" in
     logo)
-        # Check for custom logo selection file
-        if [ -f "$HOME/.config/fastfetch/.current_logo" ]; then
-            SELECTED_LOGO=$(cat "$HOME/.config/fastfetch/.current_logo")
-            if [ -f "$FASTFETCH_LOGO_DIR/$SELECTED_LOGO" ]; then
-                echo "$FASTFETCH_LOGO_DIR/$SELECTED_LOGO"
-                exit 0
-            fi
-        fi
-        
-        # Use default logo
-        if [ -f "$DEFAULT_LOGO" ]; then
-            echo "$DEFAULT_LOGO"
+        if [ -L "$CURRENT_LOGO_LINK" ] && [ -e "$CURRENT_LOGO_LINK" ]; then
+            echo "$CURRENT_LOGO_LINK"
         else
-            # Find first available logo
-            FIRST_LOGO=$(find "$FASTFETCH_LOGO_DIR" -type f -name "*.icon" 2>/dev/null | head -1)
-            if [ -n "$FIRST_LOGO" ]; then
-                echo "$FIRST_LOGO"
+            # Fallback if symlink is broken
+            if [ -f "$DEFAULT_LOGO" ]; then
+                echo "$DEFAULT_LOGO"
+            else
+                find "$FASTFETCH_LOGO_DIR" -type f -name "*.icon" 2>/dev/null | head -1
             fi
         fi
         ;;
     set-logo)
-        # Set a specific logo
         if [ -n "$2" ]; then
-            echo "$2" > "$HOME/.config/fastfetch/.current_logo"
-            echo "Logo set to: $2"
+            SELECTED_LOGO="$FASTFETCH_LOGO_DIR/$2"
+            if [ -f "$SELECTED_LOGO" ]; then
+                ln -sf "$SELECTED_LOGO" "$CURRENT_LOGO_LINK"
+                echo "$2" > "$HOME/.config/fastfetch/.current_logo"
+                echo "Logo set to: $2"
+            else
+                echo "Error: Logo $2 not found in $FASTFETCH_LOGO_DIR"
+            fi
         else
             echo "Usage: fastfetch.sh set-logo <logo-name>"
             echo "Available logos:"
-            ls "$FASTFETCH_LOGO_DIR"
+            ls "$FASTFETCH_LOGO_DIR" | grep ".icon"
         fi
         ;;
     list-logos)
         echo "Available logos:"
-        ls "$FASTFETCH_LOGO_DIR" 2>/dev/null || echo "No logos found"
+        ls "$FASTFETCH_LOGO_DIR" | grep ".icon" 2>/dev/null || echo "No logos found"
         ;;
     *)
         echo "PigOS Fastfetch Helper"
@@ -160,7 +167,7 @@ chmod +x "$LOCAL_BIN/fastfetch.sh"
 echo -e "${GREEN}  ✓ Helper script created at $LOCAL_BIN/fastfetch.sh${NC}"
 
 # Add ~/.local/bin to PATH if not already there
-if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
+if [[ ":$PATH:" != *":$TARGET_HOME/.local/bin:"* ]]; then
     echo -e "${YELLOW}  Adding ~/.local/bin to PATH...${NC}"
 fi
 
@@ -176,11 +183,11 @@ CONFIG_APPLIED=false
 
 for SH in "${RECOGNIZED_SHELLS[@]}"; do
     case "$SH" in
-        bash) RC_FILE="$HOME/.bashrc" ;;
-        zsh) RC_FILE="$HOME/.zshrc" ;;
+        bash) RC_FILE="$TARGET_HOME/.bashrc" ;;
+        zsh) RC_FILE="$TARGET_HOME/.zshrc" ;;
         fish) 
-            RC_FILE="$HOME/.config/fish/config.fish"
-            mkdir -p "$HOME/.config/fish"
+            RC_FILE="$TARGET_HOME/.config/fish/config.fish"
+            mkdir -p "$TARGET_HOME/.config/fish"
             ;;
     esac
 
@@ -220,21 +227,26 @@ for SH in "${RECOGNIZED_SHELLS[@]}"; do
 done
 
 if [ "$CONFIG_APPLIED" = false ]; then
-    echo -e "${RED}  ✗ No common shell RC files found. Adding to $HOME/.bashrc by default.${NC}"
-    echo "fastfetch --config $HOME/.config/fastfetch/config.jsonc" >> "$HOME/.bashrc"
+    echo -e "${RED}  ✗ No common shell RC files found. Adding to $TARGET_HOME/.bashrc by default.${NC}"
+    echo "fastfetch --config \$HOME/.config/fastfetch/config.jsonc" >> "$TARGET_HOME/.bashrc"
 fi
 
 echo ""
 
-# Set default logo
+# Set default logo and fix permissions
+if [ -d "$FASTFETCH_CONFIG_DIR" ]; then
+    chown -R "$TARGET_USER:$TARGET_USER" "$FASTFETCH_CONFIG_DIR"
+fi
+if [ -d "$LOCAL_BIN" ]; then
+    chown -R "$TARGET_USER:$TARGET_USER" "$LOCAL_BIN"
+fi
+
 if [ -f "$FASTFETCH_CONFIG_DIR/logo/pochita.icon" ]; then
-    echo "pochita.icon" > "$FASTFETCH_CONFIG_DIR/.current_logo"
-    echo -e "${GREEN}✓ Default logo set to pochita.icon${NC}"
+    sudo -u "$TARGET_USER" "$LOCAL_BIN/fastfetch.sh" set-logo pochita.icon
 elif [ -d "$FASTFETCH_CONFIG_DIR/logo" ]; then
     FIRST_LOGO=$(ls "$FASTFETCH_CONFIG_DIR/logo" 2>/dev/null | head -1)
     if [ -n "$FIRST_LOGO" ]; then
-        echo "$FIRST_LOGO" > "$FASTFETCH_CONFIG_DIR/.current_logo"
-        echo -e "${GREEN}✓ Default logo set to $FIRST_LOGO${NC}"
+        sudo -u "$TARGET_USER" "$LOCAL_BIN/fastfetch.sh" set-logo "$FIRST_LOGO"
     fi
 fi
 
